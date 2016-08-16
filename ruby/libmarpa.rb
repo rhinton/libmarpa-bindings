@@ -199,6 +199,8 @@ module LibMarpa
 #/*:109*//*295:*/
 ##line 2708 "./marpa.w"
 #
+  KEEP_SEPARATION = 1
+  PROPER_SEPARATION = 2
 ##define MARPA_KEEP_SEPARATION  0x1
 #/*:295*//*299:*/
 ##line 2748 "./marpa.w"
@@ -325,6 +327,11 @@ module LibMarpa
 #const char*t_error_string;
 #};
 #typedef struct marpa_config Marpa_Config;
+  class Marpa_Config < FFI::Struct
+    layout :t_is_ok, :int, 
+           :t_error, :Marpa_Error_Code, 
+           :t_error_string, :string
+  end
 #
 #/*:44*//*110:*/
 ##line 1029 "./marpa.w"
