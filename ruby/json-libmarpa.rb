@@ -198,20 +198,20 @@ end
 # lexing
 s_none = -1
 token_spec = [
-  [%r"\{", 'S_begin_object',     s_begin_object],
-  [%r"\}", 'S_end_object',       s_end_object],
-  [%r"\[", 'S_begin_array',      s_begin_array],
-  [%r"\]", 'S_end_array',        s_end_array],
-  [%r",",  'S_value_separator',  s_value_separator],
-  [%r":",  'S_name_separator',   s_name_separator],
+  [%r"\{", 's_begin_object',     s_begin_object],
+  [%r"\}", 's_end_object',       s_end_object],
+  [%r"\[", 's_begin_array',      s_begin_array],
+  [%r"\]", 's_end_array',        s_end_array],
+  [%r",",  's_value_separator',  s_value_separator],
+  [%r":",  's_name_separator',   s_name_separator],
 
-  [%r'"(([^"\\]|\\[\\"/bfnrt]|\\u\d{4})*)"',         'S_string', s_string],
-  [%r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?',  'S_number', s_number],
+  [%r'"(([^"\\]|\\[\\"/bfnrt]|\\u\d{4})*)"',         's_string', s_string],
+  [%r'-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?',  's_number', s_number],
   # un-confuse Emacs Ruby mode ']
 
-  [%r'\btrue\b',  'S_true',  s_true],
-  [%r'\bfalse\b', 'S_false', s_false],
-  [%r'\bnull\b',  'S_null',  s_null],
+  [%r'\btrue\b',  's_true',  s_true],
+  [%r'\bfalse\b', 's_false', s_false],
+  [%r'\bnull\b',  's_null',  s_null],
 
   [%r'[ \t]+', 'SKIP',     s_none],  # Skip over spaces and tabs
   [%r'[\r\n]', 'NEWLINE',  s_none],  # Line endings
@@ -230,8 +230,10 @@ token_spec.each do |re, name, sym|
 end
 token_regex = Regexp.new(token_regex.join('|'))
 
-puts "Lexing token regex:"
-puts "  #{token_regex.to_s}"
+#old:puts "Lexing token regex:"
+#old:puts "  #{token_regex.to_s}"
+
+#dbg:require 'byebug' ; debugger ; a=1 #DEBUG::
 
 pos = 0
 line_num = 1
@@ -252,7 +254,7 @@ while md = input.match(token_regex, pos)
     token_value  = md[token_symbol]
     column = md.begin(0) - pos
 
-    token_symbol_id = token_id[token_symbol]
+    token_symbol_id = token_id[token_symbol.to_sym]
     token_start     = md.begin(0)
     token_length    = token_value.length
 
@@ -272,138 +274,124 @@ while md = input.match(token_regex, pos)
 
   pos += md[0].length
 end  # loop over lexing input
-#for mo in re.finditer(token_regex, input):
-#
-#  token_symbol    = mo.lastgroup
-#  token_value     = mo.group(token_symbol)
-#  
-#  if token_symbol == 'NEWLINE':
-#      line_start = mo.end()
-#      line_num += 1
-#  elif token_symbol == 'SKIP':
-#      pass
-#  elif token_symbol == 'MISMATCH':
-#      raise RuntimeError('%r unexpected on line %d' % (value, line_num))
-#  else:
-#      column = mo.start() - line_start
-#      
-#      token_symbol_id = token_id[token_symbol]
-#      token_start     = mo.start()
-#      token_length    = len(token_value)
-#
-##     print token_symbol, token_symbol_id, "'%s'" % token_value, "%s:%s" % (token_start, token_length), '@%s:%s' % (line_num, column)
-#      
-#      status = lib.marpa_r_alternative (r, token_symbol_id, token_start + 1, 1)
-#      if status != lib.MARPA_ERR_NONE:
-#        expected = ffi.new("Marpa_Symbol_ID*")
-#        count_of_expected = lib.marpa_r_terminals_expected (r, expected)
-#        # todo: list expected terminals
-#        print('marpa_r_alternative: ' + ', '.join(codes.errors[status]))
-#        sys.exit (1)
-#      
-#      status = lib.marpa_r_earleme_complete (r)
-#      if status < 0:
-#        e = lib.marpa_g_error (g, ffi.new("char**"))
-#        print ('marpa_r_earleme_complete:' + e)
-#        sys.exit (1)
-#      
-#      token_values[token_start] = token_value
-#
-## valuate
-#      
-#bocage = lib.marpa_b_new (r, -1)
-#if bocage == ffi.NULL:
-#  e = lib.marpa_g_error (g, ffi.new("char**"))
-#  print(codes.errors[e])
-#  sys.exit (1)
-#
-#order = lib.marpa_o_new (bocage)
-#if order == ffi.NULL:
-#  e = lib.marpa_g_error (g, ffi.new("char**"))
-#  print(codes.errors[e])
-#  sys.exit (1)
-#
-#tree = lib.marpa_t_new (order)
-#if tree == ffi.NULL:
-#  e = lib.marpa_g_error (g, ffi.new("char**"))
-#  print(codes.errors[e])
-#  sys.exit (1)
-#
-#tree_status = lib.marpa_t_next (tree)
-#if tree_status <= -1:
-#  e = lib.marpa_g_error (g, ffi.new("char**"))
-#  print("marpa_t_next returned:", e, codes.errors[e])
-#  sys.exit (1)
-#
-#value = lib.marpa_v_new (tree)
-#if value == ffi.NULL:
-#  e = lib.marpa_g_error (g, ffi.new("char**"))
-#  print("marpa_v_new returned:", e, codes.errors[e])
-#  sys.exit (1)
-#
-#column = 0
-#
-##print "Parser Output:"
-#
-#while 1:
-#  step_type = lib.marpa_v_step (value)
-#  if step_type < 0:
-#    e = lib.marpa_g_error (g, ffi.new("char**"))
-#    print("marpa_v_event returned:", e, codes.errors[e])
-#    sys.exit (1)
-#  if step_type == lib.MARPA_STEP_INACTIVE:
-#    if 0: print ("No more events\n")
-#    break
-#  if step_type != lib.MARPA_STEP_TOKEN:
-#    continue
-#  token = value.t_token_id
-#  if column > 60:
-#    sys.stdout.write ("\n")
-#    column = 0
-#  if token == S_begin_array:
-#    sys.stdout.write ('[')
-#    column += 1
-#    continue
-#  if token == S_end_array:
-#    sys.stdout.write (']')
-#    column += 1
-#    continue
-#  if token == S_begin_object:
-#    sys.stdout.write ('{')
-#    column += 1
-#    continue
-#  if token == S_end_object:
-#    sys.stdout.write ('}')
-#    column += 1
-#    continue
-#  if token == S_name_separator:
-#    sys.stdout.write (':')
-#    column += 1
-#    continue
-#  if token == S_value_separator:
-#    sys.stdout.write (',')
-#    column += 1
-#    continue
-#  if token == S_null:
-#    sys.stdout.write( "null" )
-#    column += 4
-#    continue
-#  if token == S_true:
-#    sys.stdout.write ('true')
-#    column += 1
-#    continue
-#  if token == S_false:
-#    sys.stdout.write ('false')
-#    column += 1
-#    continue
-#  if token == S_number:
-#    start_of_number = value.t_token_value - 1
-#    sys.stdout.write( token_values[start_of_number] )
-#    column += 1
-#  if token == S_string:
-#    start_of_string = value.t_token_value - 1
-#    sys.stdout.write( token_values[start_of_string] )
-#    
-#sys.stdout.write("\n")
+
+#TODO: rewrite using expected tokens
+
+# valuate
+
+bocage = LibMarpa.marpa_b_new(pr, -1)
+if bocage.nil?
+  pstr = FFI::MemoryPointer.new :string
+  e = LibMarpa.marpa_g_error(pg, pstr)
+  puts "Error creating bocage: #{pstr.read_string}"
+  #puts(codes.errors[e])
+  exit(1)
+end
+
+order = LibMarpa.marpa_o_new(bocage)
+if order.nil?
+  pstr = FFI::MemoryPointer.new :string
+  e = LibMarpa.marpa_g_error(pg, pstr)
+  puts "Error creating order: #{pstr.read_string}"
+  #puts(codes.errors[e])
+  exit(1)
+end
+
+tree = LibMarpa.marpa_t_new(order)
+if tree.nil?
+  pstr = FFI::MemoryPointer.new :string
+  e = LibMarpa.marpa_g_error(pg, pstr)
+  puts "Error creating tree: #{pstr.read_string}"
+  #puts(codes.errors[e])
+  exit(1)
+end
+
+tree_status = LibMarpa.marpa_t_next(tree)
+if tree_status <= -1
+  pstr = FFI::MemoryPointer.new :string
+  e = LibMarpa.marpa_g_error(pg, pstr)
+  puts "Error moving to first tree item: #{pstr.read_string}"
+  #puts(codes.errors[e])
+  exit(1)
+end
+
+value = LibMarpa.marpa_v_new(tree)
+if value.nil?
+  pstr = FFI::MemoryPointer.new :string
+  e = LibMarpa.marpa_g_error(pg, pstr)
+  puts "Error creating value: #{pstr.read_string}"
+  #puts(codes.errors[e])
+  exit(1)
+end
+value_struct = LibMarpa::Marpa_Value.new value
+
+column = 0
+
+#print "Parser Output:"
+
+while true
+  step_type = LibMarpa.marpa_v_step(value)
+  if step_type < 0
+    pstr = FFI::MemoryPointer.new :string
+    e = LibMarpa.marpa_g_error(pg, pstr)
+    puts "marpa_v_egent returned: #{pstr.read_string}"
+    #puts(codes.errors[e])
+    exit(1)
+  end
+
+  if step_type == LibMarpa::Step::INACTIVE
+    #dbg:print ("No more events\n")
+    break
+  elsif step_type != LibMarpa::Step::TOKEN
+    next
+  end
+
+  if column > 60
+    print("\n")
+    column = 0
+  end
+
+  token = value_struct[:t_token_id]
+  case token
+  when s_begin_array
+    print('[')
+    column += 1
+  when s_end_array
+    print(']')
+    column += 1
+  when s_begin_object
+    print('{')
+    column += 1
+  when s_end_object
+    print('}')
+    column += 1
+  when s_name_separator
+    print(':')
+    column += 1
+  when s_value_separator
+    print(',')
+    column += 1
+  when s_null
+    print("null")
+    column += 4
+  when s_true
+    print('true')
+    column += 1
+  when s_false
+    print('false')
+    column += 1
+  when s_number
+    start_of_number = value_struct[:t_token_value] - 1
+    print(token_values[start_of_number])
+    column += 1
+  when s_string
+    start_of_string = value_struct[:t_token_value] - 1
+    print(token_values[start_of_string])
+  end  # case token
+end  # while true
+
+print("\n")
 
 puts "Ran to completion."
+
+# should free pconfig, pg, pr, bocage, order, tree, and value

@@ -365,6 +365,18 @@ module LibMarpa
 #Marpa_Earley_Set_ID t_rule_start_ys_id;
 #Marpa_Earley_Set_ID t_ys_id;
 #};
+  class Marpa_Value < FFI::Struct
+    layout :t_step_type, :Marpa_Step_Type,
+           :t_token_id, :Marpa_Symbol_ID,
+           :t_token_value, :int,
+           :t_rule_id, :Marpa_Rule_ID,
+           :t_arg_0, :int,
+           :t_arg_n, :int,
+           :t_result, :int,
+           :t_token_start_ys_id, :Marpa_Earley_Set_ID,
+           :t_rule_start_ys_id, :Marpa_Earley_Set_ID,
+           :t_ys_id, :Marpa_Earley_Set_ID
+  end
 #/*:1045*/
 ##line 16259 "./marpa.w"
 #
