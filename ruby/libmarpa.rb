@@ -272,6 +272,19 @@ module LibMarpa
     SYMBOL_EXPECTED = 7
     SYMBOL_NULLED = 8
     SYMBOL_PREDICTED = 9
+
+    Message = {
+      NONE => 'No event', 
+      COUNTED_NULLABLE => 'This symbols is a counted nullable', 
+      EARLEY_ITEM_THRESHOLD => 'Too many Earley items', 
+      EXHAUSTED => 'Recognizer is exhausted', 
+      LOOP_RULES => 'Grammar contains an infinite loop', 
+      NULLING_TERMINAL => 'This symbol is a nulling terminal', 
+      SYMBOL_COMPLETED => 'Completed symbol', 
+      SYMBOL_EXPECTED => 'Expecting symbol', 
+      SYMBOL_NULLED => 'Symbol was nulled', 
+      SYMBOL_PREDICTED => 'Symbol was predicted', 
+    }
   end # module Event
 
   #line 1 "./marpa.h-step"

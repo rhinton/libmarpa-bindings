@@ -42,6 +42,6 @@ class Marpa::Atoms::Alternative < Marpa::Atoms::Base
   end
   
   def to_s_inner
-    alternatives.map { |a| a.to_s }.join(' / ')
+    alternatives.map { |a| a.to_s }.join(' | ')
   end
 end

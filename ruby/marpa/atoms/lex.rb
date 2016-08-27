@@ -8,12 +8,18 @@
 #
 class Marpa::Atoms::Lex < Marpa::Atoms::Base
   def initialize(re)
-    @re = re
+    @re_orig = re  # used for inspect, easier to read
+    @re = Regexp.new('\G' + re.to_s)
+    # Modify Regexp to force match to begin at the current location -- not any
+    # old spot in the string.  Note that ^ is the beginning of line (fails on
+    # anything besides begin of string of after NL/CR) and \A is the beginning
+    # of string (fails for pos > 0).  \G is "where the last match finished",
+    # which works as intended with pos > 0.
   end
 
   # Match this terminal against the current input.
-  def match(io)
-    io.match(@re)
+  def match(str, pos=0)
+    @re.match(str, pos)
   end
 
   # Build the sub-grammar for this rule: a terminal, so just a symbol with no
@@ -26,7 +32,7 @@ class Marpa::Atoms::Lex < Marpa::Atoms::Base
   end
 
   def to_s_inner
-    @re.inspect
+    @re_orig.inspect
   end
 
 end  # Marpa::Atoms::Lex

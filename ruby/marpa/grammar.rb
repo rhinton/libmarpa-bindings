@@ -220,20 +220,34 @@ module Marpa
       end
     end
 
+    # Helper method to get the information about the rule.  Returns a pair of
+    # arrays.  The first array has a list of symbols.  The LHS symbol is in
+    # position 0, and the RHS symbols are in positions 1..N.  The second array
+    # has the same format, but with parser atoms instead of symbols.
+    def get_rule(rule_id)
+      lhs_id = LibMarpa.marpa_g_rule_lhs(pg, rule_id)
+      rule_length = LibMarpa.marpa_g_rule_length(pg, rule_id)
+      rhs_id = Array.new(rule_length) do |ix|
+        LibMarpa.marpa_g_rule_rhs(pg, rule_id, ix)
+      end
+      lhs = @id_to_atom[lhs_id]
+      rhs = rhs_id.map {|id| @id_to_atom[id]}
+      return [[lhs_id, rhs_id], [lhs, rhs]]
+    end  # get_rule method
+
     # Print the rules in the grammar.
     def show_rules
       highest_rule_id = LibMarpa.marpa_g_highest_rule_id(pg)
       (0..highest_rule_id).each do |rule_id|
-        lhs_id = LibMarpa.marpa_g_rule_lhs(pg, rule_id)
-        rule_length = LibMarpa.marpa_g_rule_length(pg, rule_id)
-        rhs = Array.new(rule_length) do |ix|
-          @id_to_atom[LibMarpa.marpa_g_rule_rhs(pg, rule_id, ix)]
-        end
+        syms, atoms = get_rule(rule_id)
+        lhs_id, rhs_id = syms;  lhs, rhs = atoms
         sequence_min = LibMarpa.marpa_g_sequence_min(pg, rule_id)
         if sequence_min < 0
-          puts "R#{rule_id}: (S#{lhs_id}) #{@id_to_atom[lhs_id].name} ::= #{rhs.join(' ')}"
+          puts "R#{rule_id}: S#{lhs_id} ::= S#{rhs_id.join(' S')}"
+          puts "     #{lhs.name} ::= #{rhs.join(' ')}"
         else
-          puts "R#{rule_id}: (S#{lhs_id}) #{@id_to_atom[lhs_id].name} ::= #{rhs.join(' ')} *"
+          puts "R#{rule_id}: S#{lhs_id} ::= sequence ( S#{rhs_id.join(' S')} ) "
+          puts "     #{lhs.name} ::= sequence ( #{rhs.join(' ')} )"
           sep_id = LibMarpa.marpa_g_sequence_separator(pg, rule_id)
           is_proper_separation = LibMarpa.marpa_g_rule_is_proper_separation(pg, rule_id)
           puts "    separation: S#{sep_id} proper: #{is_proper_separation}, sequence min: #{sequence_min}"

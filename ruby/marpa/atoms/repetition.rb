@@ -37,6 +37,7 @@ class Marpa::Atoms::Repetition < Marpa::Atoms::Base
     else
       parser.create_repetition_rule(sym, rsym, min)
     end
+    return sym
   end
 
   def to_s_inner
