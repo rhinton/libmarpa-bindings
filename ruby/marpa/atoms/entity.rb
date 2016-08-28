@@ -20,7 +20,7 @@ class Marpa::Atoms::Entity < Marpa::Atoms::Base
     return @rule unless @rule.nil?
     @rule = @block.call
     raise_not_implemented if @rule.nil?
-    @rule.label = @label
+    @rule.label = @label || "#{name}.rule"
     @rule
   end
 

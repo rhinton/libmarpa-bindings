@@ -70,6 +70,7 @@ module Marpa
         }
         
         @rules[name] = Atoms::Entity.new(name, opts[:label], &definition_closure)
+        # @rules[name] = definition.call
       end
     end  # rule method (pulled in as a class method)
 

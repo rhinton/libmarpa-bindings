@@ -162,7 +162,7 @@ class Marpa::Atoms::Base
     to_s
   end
   def name
-    "sym#{self.object_id}"
+    to_s #"sym#{self.object_id}"
   end
 
 #copy:private

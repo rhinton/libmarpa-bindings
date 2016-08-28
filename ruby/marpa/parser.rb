@@ -27,11 +27,9 @@ module Marpa
       grammar.ensure_precomputed
 
       recognize
-      evaluate
+      value = evaluate
 
-      # Leave the recognizer in case we want to reuse it (e.g. to show progress
-      # after a failed parse).
-
+      return value
     end  # parse method
 
     # Determine whether the given string is a member of the grammar for this
@@ -190,14 +188,16 @@ module Marpa
                                 LibMarpa.method(:marpa_t_unref))
       raise_unless(pt, "Failed to allocate parse tree iterator.")
 
+      parse_result = nil
       while true
         rc = LibMarpa.marpa_t_next(pt) 
         break if -1 == rc  # -1 return indicates no more trees
         raise_unless(rc >= 0, "Error calling marpa_t_next")
-        tree_iterate(pt)
+        parse_result = tree_iterate(pt)
       end
 
       puts "(Tree iteration done, evaluation complete.)"#DEBUG::
+      return parse_result
     end  # evaluate method
     #private :evaluate
 
@@ -218,7 +218,7 @@ module Marpa
 
         case step_type
         when LibMarpa::Step::RULE 
-          stack[value[:t_result]] = rule_value(value[:t_rule_id], stack[value[:t_arg_0], value[:t_arg_n]])
+          stack[value[:t_result]] = rule_value(value[:t_rule_id], stack[value[:t_arg_0]..value[:t_arg_n]])
         when LibMarpa::Step::TOKEN
           tok_str = get_token_string(value[:t_token_id], value[:t_token_value])
           stack[value[:t_result]] = token_value(value[:t_token_id], tok_str)
@@ -236,6 +236,18 @@ module Marpa
 
       pv.free  # force free of valuator so tree can advance
       return stack[0]
+    end
+
+    # Default +rule_value+ implementation: "scons" of the name of the rule and
+    # the arguments.
+    def rule_value(rule_id, args)
+      #[@grammar.atom(rule_id).name, *args]
+      [rule_id, *args]
+    end
+
+    # Default +token_value+ implementation: pass through the string.
+    def token_value(sym_id, str)
+      str
     end
 
     # Translate a symbol ID and "value" into the string for that token.  The
