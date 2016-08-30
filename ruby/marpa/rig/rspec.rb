@@ -4,14 +4,16 @@ RSpec::Matchers.define(:parse) do |input, opts|
   as = block = nil
   result = trace = nil
 
-  match do |parser|
+  match do |grammar|
     begin
+      parser = (opts && opts[:parser]) || Marpa::Parser.new(grammar)
       result = parser.parse(input)
       block ? 
         block.call(result) : 
         (as == result || as.nil?)
     rescue Parslet::ParseFailed => ex
-      trace = ex.cause.ascii_tree if opts && opts[:trace]
+      #trace = ex.cause.ascii_tree if opts && opts[:trace]
+      trace = ex.to_s
       false
     end
   end
