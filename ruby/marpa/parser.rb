@@ -10,14 +10,15 @@ require 'stringio'
 # Write an example here.
 module Marpa
   class Parser
+    attr_reader :grammar
   
-    def initialize
+    def initialize(grammar)
       @pr = nil
+      @grammar = grammar
     end
   
-    def parse(io, grammar)
+    def parse(io)
       # store off a pointer to the grammar
-      @grammar = grammar
 
       # for convenience, wrap string inputs
       @str = (io.kind_of? String) ? io : io.read
@@ -36,7 +37,7 @@ module Marpa
     # parser.  Raises a +ParseFailed+ exception on failure.
     def recognize
       # convenience
-      pg = @grammar.pg
+      pg = grammar.pg
       str = @str
 
       # create the recognizer, free the last one if extant
@@ -86,7 +87,7 @@ module Marpa
           #dbg:puts " (finished discarding characters, trying terminals at pos #{pos})" #DEBUG::
           #dbg:puts "  (expected terminals #{pterms_buf.read_array_of_int(num_terminals)})" #DEBUG::
           pterms_buf.read_array_of_int(num_terminals).each do |sidx|
-            atom = @grammar.atom(sidx)
+            atom = grammar.atom(sidx)
             #dbg:puts "  (trying expected pattern S#{sidx}=#{atom.inspect})" #DEBUG::
             if mr = atom.match(str, pos)  # intentional assignment
               match_len = mr[0].length
@@ -162,7 +163,7 @@ module Marpa
       active = true
       while active
         active = false
-        @grammar.discards.each do |lex|
+        grammar.discards.each do |lex|
           result = lex.match(str, pos)
           next unless result
           pos += (match_len = result[0].length)  # intentional assignment
@@ -241,8 +242,9 @@ module Marpa
     # Default +rule_value+ implementation: "scons" of the name of the rule and
     # the arguments.
     def rule_value(rule_id, args)
-      #[@grammar.atom(rule_id).name, *args]
-      [rule_id, *args]
+      #[grammar.atom(rule_id).name, *args]
+      syms, atoms = grammar.get_rule(rule_id)
+      [atoms[0].name, *args]
     end
 
     # Default +token_value+ implementation: pass through the string.
@@ -254,7 +256,7 @@ module Marpa
     # parser stores '1 + pos', the position where the token lexer matched, as
     # the value for the token.
     def get_token_string(sym_id, tok_val)
-      mr = @grammar.atom(sym_id).match(@str, tok_val-1)
+      mr = grammar.atom(sym_id).match(@str, tok_val-1)
       raise_unless(mr, "Failed to get token string: lexer failed to match at previous location.")
       return mr[0]
     end
@@ -267,7 +269,7 @@ module Marpa
     def raise_unless(tf, err_str)
       if ! tf
         pstr = FFI::MemoryPointer.new :string
-        ec = LibMarpa.marpa_g_error(@grammar.pg, pstr)
+        ec = LibMarpa.marpa_g_error(grammar.pg, pstr)
         #old:raise ParseFailed, "#{err_str}: #{pstr.read_string}"
         #segfault:ec = LibMarpa.marpa_g_error(pg, nil)
         raise ParseFailed, "#{err_str}: #{LibMarpa::Error::Message[ec]}"
@@ -278,7 +280,7 @@ module Marpa
     # Show progress of the parser (Earley items) at the given index ('earleme',
     # may be character or byte or lexer token, depending on the lexer).
     def show_progress(pos)
-      pg = @grammar.pg  # convenience
+      pg = grammar.pg  # convenience
 
       rc = LibMarpa.marpa_r_progress_report_start(@pr, pos)
       raise_unless(rc >= 0, "Error in marpa_r_progress_report_start")
@@ -295,7 +297,7 @@ module Marpa
         sequence_min = LibMarpa.marpa_g_sequence_min(pg, rule_id)
         seq_str = (sequence_min >= 0) ? '*' : ''
 
-        syms, atoms = @grammar.get_rule(rule_id)
+        syms, atoms = grammar.get_rule(rule_id)
         lhs_id, rhs_id = syms;  lhs, rhs = atoms
         pos = pos % (rhs.length + 1)  # handle -1 == pos case
         prefix = case pos

@@ -36,7 +36,7 @@ if $0 == __FILE__
   #verbose:grammar.show_rules
   #verbose:puts " "
 
-  parser = Marpa::Parser.new
+  parser = Marpa::Parser.new(grammar)
   #tmp:def parser.rule_value(rule_id, args)
   #tmp:  puts "Evaluate rule R#{rule_id} with arguments #{args.inspect}"
   #tmp:end
@@ -44,9 +44,9 @@ if $0 == __FILE__
   #tmp:  str
   #tmp:end
 
-  #tmp:parser.parse(" xasdfasdfasd ", grammar) rescue nil
-  result = parser.parse('[ 1, "abc\ndef", -2.3, null, [], true, false, [1,2,3], {}, {"a":1,"b":2} ]', grammar)
-  #tmp:parser.parse(' 319  ', grammar)
+  #tmp:parser.parse(" xasdfasdfasd ") rescue nil
+  result = parser.parse('[ 1, "abc\ndef", -2.3, null, [], true, false, [1,2,3], {}, {"a":1,"b":2} ]')
+  #tmp:parser.parse(' 319  ')
   #tmp:parser.show_progress(0)
   #tmp:parser.show_progress(1)
 
