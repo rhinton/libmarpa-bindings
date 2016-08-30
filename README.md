@@ -48,9 +48,9 @@ Ruby
   libmarpa C functions can be called from Ruby via
   [FFI](https://github.com/ffi/ffi).  Error checking handled manually.
 
-  Sample [JSON Parser](https://github.com/rns/libmarpa-bindings/blob/master/ruby/json-libmarpa.rb),
-  is a port of the [Python version](https://github.com/rns/libmarpa-bindings/blob/master/python/json-libmarpa.py), 
-  which includes a handwritten lexer based on Python regexes.
+  Sample [JSON Parser](ruby/json-libmarpa.rb), is a port of the [Python
+  version](python/json-libmarpa.py), which includes a handwritten lexer based
+  on Python regexes.
 
   A fairly usable higher-level interface is available through the provided
   `Grammar` and `Parser` classes.  It includes the lexing function.  The DSL is
@@ -60,11 +60,11 @@ Ruby
   mature as the `Marpa::R2` Perl bindings or its SLIF DSL, but it's a good
   first step.
 
-  Another sample [JSON parser](ruby/json-marpa.rb)
-  exhibits the higher-level bindings.
+  Another sample [JSON parser](ruby/json-marpa.rb) exhibits the higher-level
+  bindings.
 
-  A [custom matcher](blob/master/ruby/marpa/rig.rb) 
-  provides a nice approach for testing grammars.  (Example coming soon.)
+  A [custom matcher](ruby/marpa/rig.rb) provides a nice approach for testing
+  grammars.  (Example coming soon.)
 
 C#
 --
