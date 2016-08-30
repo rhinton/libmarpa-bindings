@@ -4,9 +4,10 @@ RSpec::Matchers.define(:parse) do |input, opts|
   as = block = nil
   result = trace = nil
 
-  match do |grammar|
+  match do |parser_or_grammar|
     begin
-      parser = (opts && opts[:parser]) || Marpa::Parser.new(grammar)
+      pog = parser_or_grammar  # too long!
+      parser = pog.respond_to?(:parse) ? pog : Marpa::Parser.new(pog)
       result = parser.parse(input)
       block ? 
         block.call(result) : 
