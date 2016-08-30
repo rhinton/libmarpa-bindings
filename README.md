@@ -60,10 +60,10 @@ Ruby
   mature as the `Marpa::R2` Perl bindings or its SLIF DSL, but it's a good
   first step.
 
-  Another sample [JSON parser](https://github.com/rns/libmarpa-bindings/blob/master/ruby/json-marpa.rb)
+  Another sample [JSON parser](ruby/json-marpa.rb)
   exhibits the higher-level bindings.
 
-  A [custom matcher](https://github.com/rns/libmarpa-bindings/blob/master/ruby/marpa/rig.rb) 
+  A [custom matcher](blob/master/ruby/marpa/rig.rb) 
   provides a nice approach for testing grammars.  (Example coming soon.)
 
 C#
