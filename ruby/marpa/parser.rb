@@ -21,7 +21,7 @@ module Marpa
 
       # for convenience, wrap string inputs
       @str = (io.kind_of? String) ? io : io.read
-      puts "recognizing [#{@str}]"#DEBUG::
+      #dbg:puts "recognizing [#{@str}]"#DEBUG::
   
       # precompute the grammar if needed
       grammar.ensure_precomputed
@@ -66,11 +66,11 @@ module Marpa
 
         #DEBUG::
         pos = LibMarpa.marpa_r_current_earleme(@pr)
-        puts "(=== current earleme (pos) #{pos}, #{num_terminals} terminals expected)"
+        #dbg:puts "(=== current earleme (pos) #{pos}, #{num_terminals} terminals expected)"
         
         # exit if we're done
         if pos >= str.length
-          puts "(Input consumed, recognizer succeeded!)"
+          #dbg:puts "(Input consumed, recognizer succeeded!)"
           break
         end
 
@@ -83,14 +83,14 @@ module Marpa
   
           # try each of the expected terminals
           terminal_matches = 0
-          puts " (finished discarding characters, trying terminals at pos #{pos})" #DEBUG::
-          puts "  (expected terminals #{pterms_buf.read_array_of_int(num_terminals)})" #DEBUG::
+          #dbg:puts " (finished discarding characters, trying terminals at pos #{pos})" #DEBUG::
+          #dbg:puts "  (expected terminals #{pterms_buf.read_array_of_int(num_terminals)})" #DEBUG::
           pterms_buf.read_array_of_int(num_terminals).each do |sidx|
             atom = @grammar.atom(sidx)
-            puts "  (trying expected pattern S#{sidx}=#{atom.inspect})" #DEBUG::
+            #dbg:puts "  (trying expected pattern S#{sidx}=#{atom.inspect})" #DEBUG::
             if mr = atom.match(str, pos)  # intentional assignment
               match_len = mr[0].length
-              puts "  (matched #{atom.inspect} at pos #{pos}...#{pos+match_len}, adding alt length #{discard_len + match_len})" #DEBUG::
+              #dbg:puts "  (matched #{atom.inspect} at pos #{pos}...#{pos+match_len}, adding alt length #{discard_len + match_len})" #DEBUG::
               terminal_matches += 1
               max_pos = [max_pos, pos + discard_len + match_len].max
               rc = LibMarpa.marpa_r_alternative(@pr, sidx, 1+pos, discard_len + match_len)
@@ -107,7 +107,7 @@ module Marpa
           if (last_pos <= pos) && (0 == terminal_matches)
             #DEBUG::
             last_pos.times do |idx|
-              puts "  == Progress report for input position #{idx} =="
+              #dbg:puts "  == Progress report for input position #{idx} =="
               show_progress(idx)
             end
             require 'byebug' ; debugger ; a=1 
@@ -115,7 +115,7 @@ module Marpa
             raise ParseFailed,"Failed to match any expected terminals at position #{pos}."
           end
         else  #DEBUG::
-          puts " (no work at position #{pos})" #DEBUG:
+          #dbg:puts " (no work at position #{pos})" #DEBUG:
         end  # if num_terminals > 0
 
         # finish this earleme
@@ -127,12 +127,12 @@ module Marpa
         num_events = rc
         evts = Array.new(num_events) do |eidx|
           evt_id = LibMarpa.marpa_g_event(pg, pevt, eidx)
-          puts "(Earleme complete event #{evt_id}: #{LibMarpa::Event::Message[evt_id]}.)"
+          #dbg:puts "(Earleme complete event #{evt_id}: #{LibMarpa::Event::Message[evt_id]}.)"
           evt_id
         end  # event processing loop
         exhausted = evts.index(LibMarpa::Event::EXHAUSTED)
         if exhausted
-          puts "(Recognizer exhausted, exiting)"
+          #dbg:puts "(Recognizer exhausted, exiting)"
           break
         end
 
@@ -145,7 +145,7 @@ module Marpa
         if pos < str.length
           raise ParseFailed, "Recognizer recognized only first #{pos} characters of input."
         end
-        puts "(Remainder #{dlen} chars of string discarded.  Recognizer successful.)"
+        #dbg:puts "(Remainder #{dlen} chars of string discarded.  Recognizer successful.)"
       end
 
       # recognizer done, must have succeeded
@@ -157,7 +157,7 @@ module Marpa
     # grammar's discard rules.
     def discard_length(str, pos)
       # try the discarded patterns to consume any unwanted stuff
-      puts " (trying discard patterns starting at pos #{pos})" #DEBUG::
+      #dbg:puts " (trying discard patterns starting at pos #{pos})" #DEBUG::
       pre_discard_pos = pos
       active = true
       while active
@@ -166,7 +166,7 @@ module Marpa
           result = lex.match(str, pos)
           next unless result
           pos += (match_len = result[0].length)  # intentional assignment
-          puts "  (discarded #{match_len} chars to pos #{pos} by rule #{lex.inspect})" #DEBUG::
+          #dbg:puts "  (discarded #{match_len} chars to pos #{pos} by rule #{lex.inspect})" #DEBUG::
         end
       end
       discard_len = pos - pre_discard_pos
@@ -196,7 +196,7 @@ module Marpa
         parse_result = tree_iterate(pt)
       end
 
-      puts "(Tree iteration done, evaluation complete.)"#DEBUG::
+      #dbg:puts "(Tree iteration done, evaluation complete.)"#DEBUG::
       return parse_result
     end  # evaluate method
     #private :evaluate
