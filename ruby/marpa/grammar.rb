@@ -84,7 +84,7 @@ module Marpa
     attr_reader :inst_root
 
     # Initialize a grammar for the given root rule.  Consists of creating an
-    # initializing the gramar.
+    # initializing the grammar.
     def initialize(temp_root=nil)
       # create a config object so we can create a grammar; will be freed when
       # pconfig is GC'ed
