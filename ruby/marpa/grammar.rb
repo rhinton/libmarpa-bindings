@@ -292,6 +292,10 @@ module Marpa
       end
     end  # ensure_precomputed method
 
+    def inspect
+      "#<#{self.class} root #{@inst_root}>"
+    end
+
   end  # class Grammar
 
 end  # module Marpa

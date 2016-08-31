@@ -314,7 +314,9 @@ module Marpa
       raise_unless(rc >= 0, "Error in marpa_r_progress_report_finish")
     end  # show_progress
 
-
+    def inspect
+      "#<#{self.class} for #{grammar.inspect}>"
+    end
 
   end  # class Parser
 end  # module Marpa
