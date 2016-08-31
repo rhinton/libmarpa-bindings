@@ -262,7 +262,7 @@ module Marpa
       end
     end  # show_rules method
 
-    # asdf
+    # Make sure the grammar has been precomputed (idempotent).
     def ensure_precomputed
       # check to see if already precomputed
       rc = LibMarpa.marpa_g_is_precomputed(pg)
