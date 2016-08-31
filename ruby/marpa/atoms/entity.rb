@@ -24,6 +24,11 @@ class Marpa::Atoms::Entity < Marpa::Atoms::Base
     @rule
   end
 
+  # Forward the request for a (named) lexer's source Regexp.
+  def source
+    rule.source
+  end
+
   # Build the sub-grammar for this rule: just a named wrapper for whatever is
   # in the rule.
   def build(parser)
