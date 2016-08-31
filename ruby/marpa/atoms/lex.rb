@@ -34,5 +34,8 @@ class Marpa::Atoms::Lex < Marpa::Atoms::Base
   def to_s_inner
     @re_orig.inspect
   end
+  def source
+    @re_orig
+  end
 
 end  # Marpa::Atoms::Lex
