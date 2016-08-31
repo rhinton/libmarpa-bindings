@@ -26,22 +26,80 @@ class Marpa::Atoms::Alternative < Marpa::Atoms::Base
     if (id = parser.sym_id(self))
       return id
     end
+    finish_priorities
     sym = parser.create_symbol(self)
     @alternatives.each do |alt_atom|
       alt_sym = alt_atom.build(parser)
-      parser.create_rule(sym, alt_sym)
+      parser.create_rule(sym, alt_sym, alt_atom.priority)
     end
     return sym
   end
 
-  # Don't construct a hanging tree of {Alternative} marpas, instead store them
-  # all in one {Alternative} object. This reduces the number of symbols created
-  # (though it creates a bunch of extra objects while building the DSL).
+  # Finish calculating the alternative priorities.  The DSL marks
+  # lower-priority alternatives with a priority of -1.  This method accumulates
+  # and shifts these values to a non-negative, monotone decreasing sequence of
+  # priorities.
+  def finish_priorities
+    #old:hi_pri = - alternatives.inject(0) {|s,alt| s + alt.priority}
+    #old:alternatives.inject(hi_pri) {|s,alt| alt.priority += s}
+    #old:# this last inject has significant, intended side-effects
+    hi_pri = -alternatives.map(&:priority).min
+    alternatives.each {|alt| alt.priority += hi_pri}
+
+    # sanity check
+    pri = nil
+    alternatives.each do |alt|
+      if pri
+        raise ArgumentError, "Unexpected priority sequence." \
+          unless (pri == alt.priority) || (pri-1 == alt.priority)
+      end
+      pri = alt.priority
+    end
+  end
+
+  # Don't construct a hanging tree of {Alternative} atoms, instead store them
+  # all in one {Alternative} object. This reduces the number of symbols in the
+  # grammar (though it creates a bunch of extra objects while building the
+  # DSL).
   def |(rule)
-    self.class.new(*@alternatives + [rule])
+    # may have higher-priority alternatives buried in rule
+    new_rules = rule.alternatives rescue [rule]
+    puts "equal-priority combining rules (#{self.inspect}) and (#{rule.inspect})" #DEBUG::
+    puts "    new rules (#{new_rules.inspect})" #DEBUG::
+    pri = alternatives.last.priority
+    new_rules.each {|alt| alt.priority += pri}
+    new_rule = self.class.new(*@alternatives + new_rules)
+    puts "    result (#{new_rule.inspect})" #DEBUG::
+    new_rule
+  end
+
+  # Similar to the previous, override prioritized alternative DSL operator to
+  # collect the options in a single object instead of a dangling tree.
+  def /(rule)
+    puts "higher-priority combining rules (#{self.inspect}) and (#{rule.inspect})" #DEBUG::
+    rule.priority = alternatives.last.priority - 1
+    new_rule = self.class.new(*@alternatives + [rule])
+    puts "    result (#{new_rule.inspect})" #DEBUG::
+    new_rule
   end
   
   def to_s_inner
-    alternatives.map { |a| a.to_s }.join(' | ')
-  end
-end
+    pri = nil
+    alternatives.map do |alt| 
+      #tmp:str = alt.to_s
+      str = "#{alt} p#{alt.priority}"
+      if pri.nil?
+        str  # first item, no separator
+      elsif pri == alt.priority
+        str = ' | ' + str
+      elsif pri > alt.priority
+        str = ' / ' + str
+      else
+        raise RuntimeError, 'Unexpected priority increase'
+      end
+      pri = alt.priority
+      str
+    end.join('')  # alternatives.map
+  end  # to_s_inner method
+
+end  # class Marpa::Atoms::Alternative

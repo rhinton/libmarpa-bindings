@@ -1,7 +1,7 @@
 
-# A mixin module that defines operations that can be called on any subclass
-# of Marpa::Atoms::Base. These operations make marpas atoms chainable and 
-# allow combination of marpa atoms to form bigger parsers.
+# A mixin module that defines operations that can be called on any subclass of
+# Marpa::Atoms::Base. These operations make atoms chainable and allow
+# combination of atoms to form bigger parsers.
 #
 # Example: 
 #
@@ -24,9 +24,9 @@ module Marpa::Atoms::DSL
     Marpa::Atoms::Repetition.new(self, min, max)
   end
   
-  # Returns a new marpa atom that is only maybe present in the input. This
-  # is synonymous to calling #repeat(0,1). Generated tree value will be 
-  # either nil (if atom is not present in the input) or the matched subtree. 
+  # Returns a new atom that is only maybe present in the input. This is
+  # synonymous to calling #repeat(0,1). Generated tree value will be either nil
+  # (if atom is not present in the input) or the matched subtree.
   #
   # Example: 
   #   str('foo').maybe
@@ -36,36 +36,50 @@ module Marpa::Atoms::DSL
     Marpa::Atoms::Maybe.new(self)
   end
 
-  # Returns a new marpa atom that will not show up in the output. This
-  # is synonymous to calling #repeat(0,1). Generated tree value will always be 
-  # nil.
-  #
-  # Example: 
-  #   str('foo').ignore
-  #
-  def ignore
-    Marpa::Atoms::Ignored.new(self)
-  end
+#copy:  # Returns a new atom that will not show up in the output. This is synonymous
+#copy:  # to calling #repeat(0,1). Generated tree value will always be nil.
+#copy:  #
+#copy:  # Example: 
+#copy:  #   str('foo').ignore
+#copy:  #
+#copy:  def ignore
+#copy:    Marpa::Atoms::Ignored.new(self)
+#copy:  end
 
-  # Chains two marpa atoms together as a sequence. 
+  # Chains two atoms together as a sequence. 
   #
   # Example: 
   #   str('a') >> str('b')
   #
-  def >>(marpa)
-    Marpa::Atoms::Sequence.new(self, marpa)
+  def >>(atom)
+    Marpa::Atoms::Sequence.new(self, atom)
   end
 
-  # Chains two marpa atoms together to express alternation. A match will
-  # always be attempted with the marpa on the left side first. If it doesn't
-  # match, the right side will be tried. 
+  # Chains two atoms together to express alternation. A match is equally valid
+  # and at an equal priority for the rule on the left and on the right.
   #
   # Example:
   #   # matches either 'a' OR 'b'
   #   str('a') | str('b')
   #
-  def |(marpa)
-    Marpa::Atoms::Alternative.new(self, marpa)
+  def |(atom)
+    Marpa::Atoms::Alternative.new(self) | atom
+  end
+
+  # Chains two atoms together to express alternation *with* precedence. A match
+  # will always be attempted with the atom on the left side first. If it
+  # doesn't match, the right side will be tried.
+  # 
+  # In fact, Marpa will try both at the same time, but if the left side
+  # matches, but the current {evaluate} implementation only enumerates the
+  # match(es) with the highest priority (Marpa "rank").
+  #
+  # Example:
+  #   # matches either 'a' OR 'b'
+  #   str('a') / str('b')
+  #
+  def /(atom)
+    Marpa::Atoms::Alternative.new(self) / atom
   end
   
 #copy:  # Tests for absence of a marpa atom in the input stream without consuming

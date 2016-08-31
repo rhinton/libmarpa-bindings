@@ -183,13 +183,21 @@ module Marpa
     # array.  An {Alternative} will call :create_rule once for each
     # alternative, each time with a {Fixnum} for the RHS.  Repetitions (Marpa
     # sequences) will call :create_sequence instead.
-    def create_rule(lhs_id, rhs)
+    def create_rule(lhs_id, rhs, priority=nil)
       rhs = [rhs] unless rhs.respond_to? :each
       len_rhs = rhs.size
       prhs = FFI::MemoryPointer.new(:int, len_rhs)
       prhs.write_array_of_int(rhs)
       rule_id = LibMarpa.marpa_g_rule_new(@pg, lhs_id, prhs, len_rhs)
       raise_if_negative(rule_id, "Error creating rule for atom [#{@id_to_atom[lhs_id].to_s}]")
+      # set priority if requested
+      if priority
+        puts "setting priority of rule #{rule_id} to #{priority}" #DEBUG::
+        new_rank = LibMarpa.marpa_g_rule_rank_set(@pg, rule_id, priority)
+        ec = LibMarpa.marpa_g_error(@pg, nil)  # check error code since rank *could* be negative
+        kinda_rc = (LibMarpa::Error::NONE == ec) ? 0 : -2
+        raise_if_negative(kinda_rc, "Error setting rule rank")
+      end
       return rule_id
     end
 
@@ -245,15 +253,19 @@ module Marpa
     # Print the rules in the grammar.
     def show_rules
       highest_rule_id = LibMarpa.marpa_g_highest_rule_id(pg)
+      raise_if_negative(highest_rule_id, "Error calling marpa_g_highest_rule_id")
       (0..highest_rule_id).each do |rule_id|
         syms, atoms = get_rule(rule_id)
         lhs_id, rhs_id = syms;  lhs, rhs = atoms
+        pri = LibMarpa.marpa_g_rule_rank(pg, rule_id)
+        raise_if_negative(pri, "Error calling marpa_g_rule_rank")
+        pri_str = "rank #{pri}" if pri > 0
         sequence_min = LibMarpa.marpa_g_sequence_min(pg, rule_id)
         if sequence_min < 0
-          puts "R#{rule_id}: S#{lhs_id} ::= S#{rhs_id.join(' S')}"
+          puts "R#{rule_id}: S#{lhs_id} ::= S#{rhs_id.join(' S')}  #{pri_str}"
           puts "     #{lhs.name} ::= #{rhs.join(' ')}"
         else
-          puts "R#{rule_id}: S#{lhs_id} ::= sequence ( S#{rhs_id.join(' S')} ) "
+          puts "R#{rule_id}: S#{lhs_id} ::= sequence ( S#{rhs_id.join(' S')} )  #{pri_str}"
           puts "     #{lhs.name} ::= sequence ( #{rhs.join(' ')} )"
           sep_id = LibMarpa.marpa_g_sequence_separator(pg, rule_id)
           is_proper_separation = LibMarpa.marpa_g_rule_is_proper_separation(pg, rule_id)

@@ -18,8 +18,6 @@ module Marpa
     end
   
     def parse(io, &blk)
-      # store off a pointer to the grammar
-
       # for convenience, wrap string inputs
       @str = (io.kind_of? String) ? io : io.read
       #dbg:puts "recognizing [#{@str}]"#DEBUG::
@@ -105,11 +103,12 @@ module Marpa
           last_pos = LibMarpa.marpa_r_furthest_earleme(@pr)  # always succeeds
           if (last_pos <= pos) && (0 == terminal_matches)
             #DEBUG::
-            last_pos.times do |idx|
-              #dbg:puts "  == Progress report for input position #{idx} =="
-              show_progress(idx)
-            end
-            require 'byebug' ; debugger ; a=1 
+            #dbg: Need to switch from earleme to Earley set ID (input to show_progress)
+            #dbg:last_pos.times do |idx|
+            #dbg:  puts "  == Progress report for input position #{idx} =="
+            #dbg:  show_progress(idx)
+            #dbg:end
+            #dbg:require 'byebug' ; debugger ; a=1 
             #END DEBUG::
             raise ParseFailed,"Failed to match any expected terminals at position #{pos}."
           end
@@ -175,12 +174,35 @@ module Marpa
     # Iterate over the recognizer result and "evaluate" to implement the parser
     # semantics.  The derived class must implement a +value+ method to evaluate
     # the recognizer results.
+    #
+    # By default (and without a block), an exception is raised if more than one
+    # parse tree describes the given string.  By enabling the
+    # {ignore_ambiguity} argument, the first parse tree is returned and the
+    # others (if any) are ignored.  Alternatively, if a block is provided, the
+    # block is called with each parse result as long as the block returns a
+    # {true}-ish value.
     def evaluate(ignore_ambiguity=false)
       # allocate the support objects for traversing the parse tree(s)
       pb = make_time_inst("bocage", @pr, -1)
-      po = make_time_inst("order", pb)
+      po = make_time_inst("ordering", pb)
+      rc = LibMarpa.marpa_o_high_rank_only_set(po, 1)
+      raise_unless(rc >= 0, "Error calling marpa_o_high_rank_only_set")
+      rc = LibMarpa.marpa_o_rank(po)
+      raise_unless(rc >= 0, "Error calling marpa_o_rank")
       pt = make_time_inst("tree", po)
+      # marpa_o_rank needs to be called before the ordering is frozen.
+      # Creating a tree object freezes the ordering.
 
+      # check for ambiguous parse
+      unless ignore_ambiguity || block_given?
+        rc = LibMarpa.marpa_o_ambiguity_metric(po)
+        raise_unless(rc >= 0, "Error calling marpa_o_ambiguity_metric")
+        raise ParseFailed, "Unexpected ambiguous parse." if rc > 1
+        # don't use raise_unless here because it assumes there is an error code
+        # in the grammar
+      end
+
+      # evaluate parse results
       more_trees = true
       parse_result = nil
       while more_trees
@@ -189,15 +211,8 @@ module Marpa
         raise_unless(rc >= 0, "Error calling marpa_t_next")
         parse_result = tree_iterate(pt)
         more_trees = (yield(parse_result) if block_given?)
-      end
-
-      unless ignore_ambiguity || block_given?
-        rc = LibMarpa.marpa_t_next(pt) 
-        if rc != -1
-          # don't use raise_unless because it assumes there is an error code in
-          # the grammar
-          raise ParseFailed, "Unexpected ambiguous parse."
-        end
+        # always returns nil when block_given? is false; this gives us the
+        # first parse result when we opt to ignore an ambiguous parse
       end
 
       #dbg:puts "(Tree iteration done, evaluation complete.)"#DEBUG::
@@ -297,8 +312,11 @@ module Marpa
     end
     private :raise_unless
 
-    # Show progress of the parser (Earley items) at the given index ('earleme',
-    # may be character or byte or lexer token, depending on the lexer).
+    # Show progress of the parser (Earley items) at the given Earley set ID.
+    # Note that the current parser uses one earleme per character, so earlemes
+    # (characters) in the middle of a token will have no Earley sets.  In
+    # short, the position argument to this method is *NOT* a character position
+    # in the input string.
     def show_progress(pos)
       pg = grammar.pg  # convenience
 

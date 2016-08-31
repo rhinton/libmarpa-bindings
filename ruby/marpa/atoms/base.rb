@@ -14,6 +14,12 @@ class Marpa::Atoms::Base
   # Cached parser to parse this rule as the root.
   attr_reader :parser
 
+  # Production priority, only used by {Alternative}.  Default is 0.
+  attr_writer :priority
+  def priority
+    @priority ||= 0
+  end
+
   # Given a string or an IO object, this will attempt a parse of its contents
   # and return a result. If the parse fails, a {Marpa::ParseFailed} exception
   # will be thrown. 
