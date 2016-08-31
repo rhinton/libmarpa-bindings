@@ -85,7 +85,7 @@ module Marpa
 
     # Initialize a grammar for the given root rule.  Consists of creating an
     # initializing the grammar.
-    def initialize(temp_root=nil)
+    def initialize(cur_root=nil)
       # create a config object so we can create a grammar; will be freed when
       # pconfig is GC'ed
       pconfig = FFI::MemoryPointer.new LibMarpa::Marpa_Config
@@ -106,9 +106,16 @@ module Marpa
       @id_to_atom = {}
       @atom_to_id = {}
 
-      # call rules to build the grammar
-      @inst_root = root
-      @inst_root = self.class.send(temp_root) if temp_root
+      # root handling, may not be defined
+      if cur_root
+        @inst_root = self.send(cur_root) 
+      else
+        raise ArgumentError, "No default root rule defined, no instance root rule provided." \
+          unless self.respond_to? :root
+        @inst_root = self.root
+      end
+
+      # build the grammar in Marpa
       @inst_root.build(self)
 
       # set the starting rule for this grammar

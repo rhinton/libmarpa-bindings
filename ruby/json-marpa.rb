@@ -45,10 +45,11 @@ if $0 == __FILE__
   #tmp:end
 
   #tmp:parser.parse(" xasdfasdfasd ") rescue nil
-  result = parser.parse('[ 1, "abc\ndef", -2.3, null, [], true, false, [1,2,3], {}, {"a":1,"b":2} ]')
+  #tmp:result = parser.parse('[ 1, "abc\ndef", -2.3, null, [], true, false, [1,2,3], {}, {"a":1,"b":2} ]')
   #tmp:parser.parse(' 319  ')
   #tmp:parser.show_progress(0)
   #tmp:parser.show_progress(1)
+  result = Marpa::Parser.new(JSONGrammar.new(:number)).parse(' 319 ')
 
   require 'pp'
   pp result
