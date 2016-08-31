@@ -17,7 +17,7 @@ module Marpa
       @grammar = grammar
     end
   
-    def parse(io)
+    def parse(io, &blk)
       # store off a pointer to the grammar
 
       # for convenience, wrap string inputs
@@ -28,7 +28,7 @@ module Marpa
       grammar.ensure_precomputed
 
       recognize
-      value = evaluate
+      value = evaluate(&blk)
 
       return value
     end  # parse method
@@ -177,7 +177,7 @@ module Marpa
     # Iterate over the recognizer result and "evaluate" to implement the parser
     # semantics.  The derived class must implement a +value+ method to evaluate
     # the recognizer results.
-    def evaluate
+    def evaluate(ignore_ambiguity=false)
       # allocate the support objects for traversing the parse tree(s)
       pb = make_time_inst("bocage", @pr, -1)
       po = make_time_inst("order", pb)
@@ -187,9 +187,19 @@ module Marpa
       parse_result = nil
       while more_trees
         rc = LibMarpa.marpa_t_next(pt) 
-        break if -1 == rc  # -1 return indicates no more trees
+        break if -1 == rc  # no more trees
         raise_unless(rc >= 0, "Error calling marpa_t_next")
         parse_result = tree_iterate(pt)
+        more_trees = (yield(parse_result) if block_given?)
+      end
+
+      unless ignore_ambiguity || block_given?
+        rc = LibMarpa.marpa_t_next(pt) 
+        if rc != -1
+          # don't use raise_unless because it assumes there is an error code in
+          # the grammar
+          raise ParseFailed, "Unexpected ambiguous parse."
+        end
       end
 
       #dbg:puts "(Tree iteration done, evaluation complete.)"#DEBUG::
