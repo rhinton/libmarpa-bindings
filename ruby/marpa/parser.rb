@@ -179,18 +179,13 @@ module Marpa
     # the recognizer results.
     def evaluate
       # allocate the support objects for traversing the parse tree(s)
-      pb = FFI::AutoPointer.new(LibMarpa.marpa_b_new(@pr, -1), 
-                                LibMarpa.method(:marpa_b_unref))
-      raise_unless(pb, "Failed to allocate bocage.")
-      po = FFI::AutoPointer.new(LibMarpa.marpa_o_new(pb), 
-                                LibMarpa.method(:marpa_o_unref))
-      raise_unless(po, "Failed to allocate ordering.")
-      pt = FFI::AutoPointer.new(LibMarpa.marpa_t_new(po), 
-                                LibMarpa.method(:marpa_t_unref))
-      raise_unless(pt, "Failed to allocate parse tree iterator.")
+      pb = make_time_inst("bocage", @pr, -1)
+      po = make_time_inst("order", pb)
+      pt = make_time_inst("tree", po)
 
+      more_trees = true
       parse_result = nil
-      while true
+      while more_trees
         rc = LibMarpa.marpa_t_next(pt) 
         break if -1 == rc  # -1 return indicates no more trees
         raise_unless(rc >= 0, "Error calling marpa_t_next")
@@ -201,6 +196,23 @@ module Marpa
       return parse_result
     end  # evaluate method
     #private :evaluate
+
+    # Create and check an instance of a Marpa "time" class.  Time classes
+    # include grammar, parser, bocage, order, tree, and value.  
+    def make_time_inst(type_name, *args)
+      # this method cleans up the {evaluate} method nicely, but the main reason
+      # is that FFI::AutoPointer will happily accept a null pointer, then try
+      # to free it later -- which gives a segfault in libmarpa
+
+      new_method = "marpa_#{type_name[0]}_new".to_sym
+      ptr = LibMarpa.send(new_method, *args)
+      raise_unless( ! ptr.null?, "Failed to allocate #{type_name}")
+
+      # now we can create a pointer
+      delete_method = "marpa_#{type_name[0]}_unref".to_sym
+      aptr = FFI::AutoPointer.new(ptr, LibMarpa.method(delete_method))
+      return aptr
+    end
 
     # Iterate over the tree, evaluating the recognizer results.
     def tree_iterate(pt)
