@@ -29,6 +29,7 @@ class Marpa::Atoms::Lex < Marpa::Atoms::Base
       return id
     end
     sym = parser.create_symbol(self)
+    return sym
   end
 
   def to_s_inner

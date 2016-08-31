@@ -22,6 +22,7 @@ class Marpa::Atoms::Maybe < Marpa::Atoms::Base
     ssym = symbol.build(parser)
     parser.create_rule(sym, [])
     parser.create_rule(sym, ssym)
+    return sym
   end
 
 #copy:  def try(source, context, consume_all)
