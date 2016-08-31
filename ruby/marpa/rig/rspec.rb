@@ -12,7 +12,7 @@ RSpec::Matchers.define(:parse) do |input, opts|
       block ? 
         block.call(result) : 
         (as == result || as.nil?)
-    rescue Parslet::ParseFailed => ex
+    rescue Marpa::ParseFailed => ex
       #trace = ex.cause.ascii_tree if opts && opts[:trace]
       trace = ex.to_s
       false
