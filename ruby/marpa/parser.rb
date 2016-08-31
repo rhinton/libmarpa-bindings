@@ -97,9 +97,7 @@ module Marpa
               rc = LibMarpa.marpa_r_alternative(@pr, sidx, 1+pos, discard_len + match_len)
               # the value is 1+ the start of the non-discarded part of the token
               # (value of 0 is reserved per Libmarpa docs)
-              if rc != LibMarpa::Error::NONE
-                LibMarpa.raise_error_code(rc, pg, "Error calling marpa_r_alternative")
-              end
+              raise_unless(LibMarpa::Error::NONE == rc, "Error calling marpa_r_alternative")
             end  # true when terminal matches
           end  # each expected terminal
   
