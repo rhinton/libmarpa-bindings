@@ -42,14 +42,21 @@ Copyright notice from marpa.h:
 require 'ffi'
 
 module LibMarpa
-  extend FFI::Library
-  #ffi_lib "/usr/local/lib/libmarpa.dll.a"
-  #ffi_lib "/usr/local/bin/cygmarpa-8-4-0.dll"
-  ffi_lib "marpa-8-4-0"
 
   MARPA_MAJOR_VERSION=8
   MARPA_MINOR_VERSION=4
   MARPA_MICRO_VERSION=0
+
+  extend FFI::Library
+  #ffi_lib "/usr/local/lib/libmarpa.dll.a"
+  #ffi_lib "/usr/local/bin/cygmarpa-8-4-0.dll"
+  begin
+    # Linux library name
+    ffi_lib "marpa-#{MARPA_MAJOR_VERSION}.#{MARPA_MINOR_VERSION}.#{MARPA_MICRO_VERSION}"
+  rescue LoadError
+    # Cygwin library name
+    ffi_lib "marpa-#{MARPA_MAJOR_VERSION}-#{MARPA_MINOR_VERSION}-#{MARPA_MICRO_VERSION}"
+  end
 
   #line 1 "./marpa.h-err"
   module Error
