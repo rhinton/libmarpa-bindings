@@ -28,10 +28,12 @@ class Marpa::Atoms::Alternative < Marpa::Atoms::Base
     end
     finish_priorities
     sym = parser.create_symbol(self)
-    @alternatives.each do |alt_atom|
-      alt_sym = alt_atom.build(parser)
+    alt_syms = alternatives.map {|aa| asym = aa.build(parser)}
+    alt_syms.each do |alt_sym|
       parser.create_rule(sym, alt_sym, alt_atom.priority)
     end
+    # two-stage construction groups the alternative rules together; doesn't
+    # affect machine operation, but easier for people to debug
     return sym
   end
 
