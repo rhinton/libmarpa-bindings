@@ -254,7 +254,9 @@ module Marpa
 
         case step_type
         when LibMarpa::Step::RULE 
-          stack[value[:t_result]] = rule_value(value[:t_rule_id], stack[value[:t_arg_0]..value[:t_arg_n]])
+          syms, atoms = grammar.get_rule(value[:t_rule_id])
+          lhs, *rhs = atoms
+          stack[value[:t_result]] = rule_value(value[:t_rule_id], lhs, rhs, stack[value[:t_arg_0]..value[:t_arg_n]])
         when LibMarpa::Step::TOKEN
           tok_str = get_token_string(value[:t_token_id], value[:t_token_value])
           stack[value[:t_result]] = token_value(value[:t_token_id], tok_str)
@@ -276,10 +278,8 @@ module Marpa
 
     # Default +rule_value+ implementation: "scons" of the name of the rule and
     # the arguments.
-    def rule_value(rule_id, args)
-      #[grammar.atom(rule_id).name, *args]
-      syms, atoms = grammar.get_rule(rule_id)
-      [atoms[0].name, *args]
+    def rule_value(rule_id, lhs_atom, rhs_atoms, args)
+      [lhs_atom.name, *args]
     end
 
     # Default +token_value+ implementation: pass through the string.
