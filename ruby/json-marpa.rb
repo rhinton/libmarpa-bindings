@@ -28,7 +28,7 @@ end
 # testing code if this is the top level
 if $0 == __FILE__
   require 'byebug'
-  require 'byebug' ; debugger ; a=1
+  #require 'byebug' ; debugger ; a=1
   grammar = JSONGrammar.new
   #verbose:puts "\n  == Grammar symbols =="
   #verbose:grammar.show_symbols
@@ -45,7 +45,7 @@ if $0 == __FILE__
   #tmp:end
 
   #tmp:parser.parse(" xasdfasdfasd ") rescue nil
-  #tmp:result = parser.parse('[ 1, "abc\ndef", -2.3, null, [], true, false, [1,2,3], {}, {"a":1,"b":2} ]')
+  result = parser.parse('[ 1, "abc\ndef", -2.3, null, [], true, false, [1,2,3], {}, {"a":1,"b":2} ]')
   #tmp:parser.parse(' 319  ')
   #tmp:parser.show_progress(0)
   #tmp:parser.show_progress(1)
