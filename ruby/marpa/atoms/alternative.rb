@@ -28,8 +28,8 @@ class Marpa::Atoms::Alternative < Marpa::Atoms::Base
     end
     finish_priorities
     sym = parser.create_symbol(self)
-    alt_syms = alternatives.map {|aa| asym = aa.build(parser)}
-    alt_syms.each do |alt_sym|
+    alt_pairs = alternatives.map {|aa| [aa, asym = aa.build(parser)]}
+    alt_pairs.each do |alt_atom, alt_sym|
       parser.create_rule(sym, alt_sym, alt_atom.priority)
     end
     # two-stage construction groups the alternative rules together; doesn't
@@ -66,22 +66,17 @@ class Marpa::Atoms::Alternative < Marpa::Atoms::Base
   def |(rule)
     # may have higher-priority alternatives buried in rule
     new_rules = rule.alternatives rescue [rule]
-    puts "equal-priority combining rules (#{self.inspect}) and (#{rule.inspect})" #DEBUG::
-    puts "    new rules (#{new_rules.inspect})" #DEBUG::
     pri = alternatives.last.priority
     new_rules.each {|alt| alt.priority += pri}
     new_rule = self.class.new(*@alternatives + new_rules)
-    puts "    result (#{new_rule.inspect})" #DEBUG::
     new_rule
   end
 
   # Similar to the previous, override prioritized alternative DSL operator to
   # collect the options in a single object instead of a dangling tree.
   def /(rule)
-    puts "higher-priority combining rules (#{self.inspect}) and (#{rule.inspect})" #DEBUG::
     rule.priority = alternatives.last.priority - 1
     new_rule = self.class.new(*@alternatives + [rule])
-    puts "    result (#{new_rule.inspect})" #DEBUG::
     new_rule
   end
   
