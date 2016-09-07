@@ -192,7 +192,6 @@ module Marpa
       raise_if_negative(rule_id, "Error creating rule for atom [#{@id_to_atom[lhs_id].to_s}]")
       # set priority if requested
       if priority
-        puts "setting priority of rule #{rule_id} to #{priority}" #DEBUG::
         new_rank = LibMarpa.marpa_g_rule_rank_set(@pg, rule_id, priority)
         ec = LibMarpa.marpa_g_error(@pg, nil)  # check error code since rank *could* be negative
         kinda_rc = (LibMarpa::Error::NONE == ec) ? 0 : -2
