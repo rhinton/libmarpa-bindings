@@ -90,7 +90,7 @@ class Marpa::Atoms::Base
 #copy:  # rewind the input. 
 #copy:  #
 #copy:  # @param source [Marpa::Source] source to read input from
-#copy:  # @param context [Marpa::Atoms::Context] context to use for the parsing
+#copy:  # @param context [Marpa::Atoms::Context] context to use for the parsing
 #copy:  # @param consume_all [Boolean] true if the current parse must consume
 #copy:  #   all input by itself.
 #copy:  def apply(source, context, consume_all=false)
